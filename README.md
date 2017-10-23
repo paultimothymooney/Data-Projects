@@ -1,2 +1,0 @@
-# Programming-Projects
-Programming Projects
