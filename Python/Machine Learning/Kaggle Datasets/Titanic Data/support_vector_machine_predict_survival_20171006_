@@ -1,0 +1,779 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Oct  5 12:29:24 2017
+
+This Python 3 script takes as an input the CSV files from the Kaggle Titanic Dataset (https://www.kaggle.com/c/titanic)
+These CSV files contain information on Passenger ID, Ticket Price, Age, Sex, etc.
+The 'training data' file contains a column titled 'Survived', while the 'testing data' file does not contain the column titled 'Survived'.
+This script uses the aforementioned data to predict whether or not each passenger survived.
+
+@author: ptm
+"""
+
+
+
+# see jupyter notebook for this script at the following link:
+# https://www.kaggle.com/paultimothymooney/titanic-predict-pandas-matplotlib-sklearn/notebook
+
+
+
+# First we will import two Python libraries that are helpful when analyzing numerical data.  
+# We will use "pandas" for the majority of our numerical computations.
+
+import pandas as pd
+
+# We will also import two Python libraries that are helpful when plotting data.
+# We will use matplotlib for the majority of our data visualizations.
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+# Next I need to set my current working directory to the folder that contains the relevant CSV files.
+# These data files were downloaded from https://www.kaggle.com/c/titanic.
+
+import os
+os.chdir('/Users/ptm/desktop/Current_working_directory')
+
+
+# We will begin by loading the relevant data.
+
+trainingData = pd.read_csv('train.csv')
+testingData = pd.read_csv('test.csv')
+
+
+# Next we will inspect the data.  We will try to answer the following questions:
+# (1) What are the titles of the columns? ; (2) how many rows are there for each column? ;
+# (3) Are there any missing values? (4) What does the data look like?
+
+
+def describeTheData(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is as follows: (1) the name of each column; (2) the number of values in each column; 
+    (3) the number of missing/NaN values in each column; (4) the contents of the first 5 rows; and
+    (5) the contents of the last 5 rows.
+    """  
+    
+    print('')
+    print('Column Values:')
+    print('')
+    print(input.columns.values)
+    print('')
+    print('Value Counts:')
+    print('')
+    print(input.info())
+    print('')
+    print('Null Value Counts:')
+    print('')
+    print(input.isnull().sum())
+    print('')
+    print('First Few Values:')
+    print('')
+    print(input.head())
+    print('')
+    print('Last Few Values:')
+    print('')
+    print(input.tail())
+    print('')
+#    print('Descriptive Stats:')
+#    print('')
+#    print(input.describe())
+    return
+
+describeTheData(trainingData)
+
+# Next let's take a closer look at some of the data.
+# Perhaps there is a relationship between surivival probability and age?
+# Let's find out by plotting the age distributions for passengers that 
+# either did or did not survive the sinking of the Titanic.
+
+# %matplotlib inline
+# the line above is necessary for the Jupyter Notebook to run properly
+
+def plotAgeDistribution(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is three graphs that each illustrate the distribution of ages for passengers
+    that either did or did not survive the sinking of the Titanic.
+    """  
+    sns.set_style("whitegrid")
+    distributionOne = sns.FacetGrid(input, hue="Survived",aspect=2)
+    distributionOne.map(plt.hist, 'Age', bins=12)
+    distributionOne.add_legend()
+    distributionOne.set_axis_labels('Age', 'Count')
+    distributionOne.fig.suptitle('Survival Probability vs Age (Blue = Died; Green = Survived)')
+    distributionTwo = sns.FacetGrid(input, hue="Survived",aspect=2)
+    distributionTwo.map(sns.kdeplot,'Age',shade= True)
+    distributionTwo.set(xlim=(0, input['Age'].max()))
+    distributionTwo.add_legend()
+    distributionTwo.set_axis_labels('Age', 'Proportion')
+    distributionTwo.fig.suptitle('Survival Probability vs Age (Blue = Died; Green = Survived)')
+
+    return
+
+plotAgeDistribution(trainingData)
+
+
+
+
+# Hmm... it looks like passengers that were less than five years old were much more likely
+# to have survived, but maybe there is not much of a correlation for any other age group.
+# As you can see, it is a bit tricky to extract meaning from all of this data.
+# Maybe it would be easier to understand if we started out with a much smaller dataset?
+# For the sake of simplicity, we are going to delete a bunch of columns, leaving us with 
+# only the core of our dataset.  Don't worry, we will replace these missing features later, 
+# in addition to also creating some new features.
+
+
+
+trainingData = trainingData.drop(['PassengerId', 'Name', 'SibSp', 'Parch', 'Ticket', 'Embarked', 'Cabin'], axis=1)
+testingData = testingData.drop(['PassengerId', 'Name', 'SibSp', 'Parch', 'Ticket', 'Embarked', 'Cabin'], axis=1)
+
+
+# While we are pre-processing our data, we also want to replace any missing values with median values.
+
+
+def replaceMissingValuesWithMedianValues(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is a modified dataframe where all missing values are replaced with median values. 
+    """  
+    input['Fare'].fillna(input['Fare'].dropna().median(), inplace=True)   
+    input['Age'].fillna(input['Fare'].dropna().median(), inplace=True)
+    return
+
+replaceMissingValuesWithMedianValues(trainingData)
+replaceMissingValuesWithMedianValues(testingData)
+
+# Furthermore, we will want to convert all categorical data to a numerical form in order to make our data
+# more compatible with the classification algorithms that we will use later on.  In this example, we will 
+# convert all of our data into numerical values that are less than five (i.e. 0,1,2,3,4). 
+
+
+def sexToBinary(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is a modified dataframe where 0 = "female" and 1 = "male".
+    """ 
+    input["Sex"] = input["Sex"].astype("category")
+    input["Sex"].cat.categories = [0,1]
+    input["Sex"] = input["Sex"].astype("int")
+    return
+
+sexToBinary(trainingData)
+sexToBinary(testingData)
+
+
+def ageToCategory(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is a modified dataframe where 0 = "ages between 0 and 4", 1 = "ages between 4 and 12",
+    2 = "ages between 12 and 18", 3 = "ages between 18 and 60", and 4 = "ages between 60 and 150".
+    """ 
+    
+    input['Age'] = input.Age.fillna(-0.5)
+    bins = (-0.01, 4, 12, 18, 60, 150)
+    categories = pd.cut(input.Age, bins, labels=False)
+    input.Age = categories
+    return
+
+ageToCategory(trainingData)
+ageToCategory(testingData)
+
+
+
+def fareToCategory(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is a modified dataframe where 0 = "ticket price < $10", 1 = "$10<X<$20", 2 = "$20<X<$30", 
+    and 3 = "ticket price > $30".
+    """ 
+    
+    input['Fare'] = input.Fare.fillna(-0.5)
+    bins = (-0.01, 10, 20, 30, 1000)
+    categories = pd.cut(input.Fare, bins, labels=False)
+    input.Fare = categories
+    return
+
+fareToCategory(trainingData)
+fareToCategory(testingData)
+       
+# Now that we have pre-processed our data, let's take a look at it once again.  We want to answer the
+# following questions: (1) What are the titles of the columns that we did not delete?; 
+# (2) What does the data look like?; (3) Are there any missing values?
+
+def describeDataAgain(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is as follows: (1) the name of each column; (2) the contents of the first 5 rows; and
+    (3) the number of missing/NaN values in each column; 
+    """ 
+    
+    print('New summary of data after making changes:')
+    print('')
+    print('Column Values:')
+    print('')
+    print(input.columns.values)
+    print('')
+    print('First Few Values:')
+    print('')
+    print(input.head())
+    print('')
+    print('Null Value Counts:')
+    print('')
+    print(input.isnull().sum())
+    return
+
+describeDataAgain(trainingData)
+
+
+# As you can see, this newly processed data is much easier to work with.  
+# Next we will visualize the data by making a heatmap. 
+# The heatmap will illustrate the relationship between each numerical feature.  
+
+def makeAHeatMap(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is a heatmap showing the relationship between each numerical feature; 
+    """  
+    
+    plt.figure(figsize=[8,6])
+    heatmap = sns.heatmap(input.corr(), vmax=1.0, square=True, annot=True)
+    heatmap.set_title('Pearson Correlation Coefficients')
+
+    return
+    
+makeAHeatMap(trainingData)
+
+
+# As you can see, it looks like there is a pretty good correlation between surivival probability
+# and ticket price, ticket class, and gender.  Let's explore this in more detail.
+
+
+def pivotTheData(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is a couple of pivot tables showing the relationship between survival probability
+    and each selected feature (i.e. ticket price, ticket class, and gender).
+    """    
+    
+    print('')
+    print('Pivot Tables:')
+    print('')
+    print(input[["Sex", "Survived"]].groupby(['Sex'], as_index=False).mean().sort_values(by='Survived', ascending=False))
+    print('')
+    print(input[["Fare", "Survived"]].groupby(['Fare'], as_index=False).mean().sort_values(by='Survived', ascending=False))
+    print('')
+    print(input[['Pclass', 'Survived']].groupby(['Pclass'], as_index=False).mean().sort_values(by='Survived', ascending=False))
+    print('')
+    return
+
+pivotTheData(trainingData)
+
+
+# Yep, it looks like ticket price, ticket class, and gender are all correlated with survival probability.
+# We will use graphs and plots to further illustrate these relationships.
+
+
+
+def plotTheData(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is as follows: (1) survival probability vs gender; (2) survival probability vs ticket class; 
+    and (3) survival probability vs gender vs ticket class.
+    """  
+    
+    plt.figure(figsize=[10,6])
+    plt.subplot(221)
+    plotOne = sns.barplot('Sex', 'Survived', data=input, capsize=.1)
+    plotOne.set_title('Survival Probability vs Gender (Blue=Female, Green=Male)')
+    plt.subplot(222)
+    plotTwo = sns.barplot('Pclass', 'Survived', data=input, capsize=.1, linewidth=2.5, facecolor=(1, 1, 1, 0), errcolor=".2", edgecolor=".2")
+    plotTwo.set_title('Survival Probability vs Ticket Class')
+
+plotTheData(trainingData)
+
+
+# We can see here that women have a higher probability of survival as compared to men.
+# Similarly, passengers with First Class tickets have a higher probability of surivival than those without.
+# Now let's look at both variables at the same time.
+
+
+def plotTheDataAgain(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is as follows: (1) survival probability vs gender; (2) survival probability vs ticket class; 
+    and (3) survival probability vs gender vs ticket class.
+    """  
+    
+    plt.figure(figsize=[8,5])
+    plotThree = sns.pointplot(x="Pclass", y="Survived", hue="Sex", data=input,
+                  palette={1: "green", 0: "blue"},
+                  markers=["*", "o"], linestyles=["-", "--"]);
+    plotThree.set_title('Survival Probability vs Gender vs Ticket Class (Blue=Female, Green=Male)')
+
+plotTheDataAgain(trainingData)
+
+
+
+
+# It looks like the passengers with the highest probability of survival were
+# female passengers with First Class tickets.  
+# Great!  This means that our classification algorithms should have something
+# good to work with.  Next we will identify a suitable classification algorithm
+# that we can use to predict whether or not a given passenger might survive.
+
+
+
+# To do this, we will import some additional Python libraries that contain
+# methods and algorithms that are helpful for machine learning applications.
+
+from sklearn import model_selection
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import learning_curve
+
+#from sklearn.metrics import make_scorer, accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC, LinearSVC
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+
+
+
+# Furthermore, we will need to split up our training data, setting aside 20%
+# of the training data for cross-validation testing, such that we can avoid
+# potentially overfitting the data.
+
+
+def splitData(input):
+    """
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is that 20% of the training data is set aside for cross-validation testing.
+    In doing this, it transforms the two arrays (xValues, yValues) into four arrays (X_train, X_test, Y_train, and Y_test).
+    """
+    X_train = 0
+    X_test = 0
+    Y_train = 0
+    Y_test = 0
+    xValues = input.drop(['Survived'], axis=1)
+    yValues = input['Survived']
+    X_train, X_test, Y_train, Y_test = train_test_split(xValues, yValues, test_size=0.2, random_state=23)
+    return
+
+splitData(trainingData)
+
+
+# for the Jupyter Notebook I have to run the contents of splitData(input) instead of just calling the function for some reason.
+X_train = 0
+X_test = 0
+Y_train = 0
+Y_test = 0
+xValues = trainingData.drop(['Survived'], axis=1)
+yValues = trainingData['Survived']
+X_train, X_test, Y_train, Y_test = train_test_split(xValues, yValues, test_size=0.2, random_state=23)
+# End splitData function
+
+
+# There are a lot of different classification algorithms to choose between.
+# Let's compare nine of them.
+
+
+
+def compareABunchOfDifferentModelsAccuracy(input):
+    """
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is a table and boxplot illustrating the accuracy score for each of nine algorithms given this input.
+    """    
+
+    print('')
+    print('Compare Multiple Classifiers:')
+    print('')
+    print('K-Fold Cross-Validation Accuracy:')
+    print('')
+    models = []
+    models.append(('LR', LogisticRegression()))
+    models.append(('RF', RandomForestClassifier()))
+    models.append(('KNN', KNeighborsClassifier()))
+    models.append(('SVM', SVC()))
+    models.append(('LSVM', LinearSVC()))
+    models.append(('GNB', GaussianNB()))
+    models.append(('DTC', DecisionTreeClassifier()))
+    models.append(('GBC', GradientBoostingClassifier()))
+    models.append(('LDA', LinearDiscriminantAnalysis()))
+        
+    resultsAccuracy = []
+    names = []
+    for name, model in models:
+        model.fit(X_train, Y_train)
+        kfold = model_selection.KFold(n_splits=10, random_state=7)
+        accuracy_results = model_selection.cross_val_score(model, X_train, Y_train, cv=kfold, scoring='accuracy')
+        resultsAccuracy.append(accuracy_results)
+        names.append(name)
+        accuracyMessage = "%s: %f (%f)" % (name, accuracy_results.mean(), accuracy_results.std())
+        print(accuracyMessage)
+
+    
+    # boxplot algorithm comparison
+    fig = plt.figure()
+    fig.suptitle('Algorithm Comparison: Accuracy')
+    ax = fig.add_subplot(111)
+    plt.boxplot(resultsAccuracy)
+    ax.set_xticklabels(names)
+    ax.set_ylabel('Cross-Validation: Accuracy Score')
+    plt.show()
+    return
+
+
+
+compareABunchOfDifferentModelsAccuracy(trainingData)
+
+
+def defineModels():
+    """
+    This function just defines each abbreviation used in the previous function (e.g. LR = Logistic Regression)
+    """
+    print('')
+    print('LR = LogisticRegression')
+    print('RF = RandomForestClassifier')
+    print('KNN = KNeighborsClassifier')
+    print('SVM = Support Vector Machine SVC')
+    print('LSVM = LinearSVC')
+    print('GNB = GaussianNB')
+    print('DTC = DecisionTreeClassifier')
+    print('GBC = GradientBoostingClassifier')
+    print('LDA = LinearDiscriminantAnalysis')
+    print('')
+    return
+
+defineModels()
+
+
+
+# It looks like all nine of these algorithms can do a decent job at this classification task.
+# Here we are looking at the "Accuracy Score".  But there is another metric called the F1
+# score that does an even better job of comparing model performance.  Let's try that now.
+
+
+def compareABunchOfDifferentModelsF1Score(input):
+    """
+    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+    The output is a table and boxplot illustrating the F1 score for each of nine algorithms given this input.
+    """   
+
+    print('')
+    print('Compare Multiple Classifiers:')
+    print('')
+    print('F1 Score:')
+    print('')
+    models = []
+    models.append(('LR', LogisticRegression()))
+    models.append(('RF', RandomForestClassifier()))
+    models.append(('KNN', KNeighborsClassifier()))
+    models.append(('SVM', SVC()))
+    models.append(('LSVM', LinearSVC()))
+    models.append(('GNB', GaussianNB()))
+    models.append(('DTC', DecisionTreeClassifier()))
+    models.append(('GBC', GradientBoostingClassifier()))
+    models.append(('LDA', LinearDiscriminantAnalysis()))
+        
+    resultsF1 = []
+    names = []
+    for name, model in models:
+        model.fit(X_train, Y_train)
+        kfold = model_selection.KFold(n_splits=10, random_state=7)
+        f1_results = model_selection.cross_val_score(model, X_train, Y_train, cv=kfold, scoring='f1_macro')
+        resultsF1.append(f1_results)
+        names.append(name)
+        f1Message = "%s: %f (%f)" % (name, f1_results.mean(), f1_results.std())
+        print(f1Message)
+        
+    fig = plt.figure()
+    fig.suptitle('Algorithm Comparison: F1 Score')
+    ax = fig.add_subplot(111)
+    plt.boxplot(resultsF1)
+    ax.set_xticklabels(names)
+    ax.set_ylabel('Cross-Validation: F1 Score')
+    plt.show()
+    return
+
+compareABunchOfDifferentModelsF1Score(trainingData)
+defineModels()
+
+
+# Again, it looks like all nine algorithms do a pretty decent job.
+# Let's look at three of them in more detail.
+# Logistic Regression is my favorite algorithm, so let's look at that.
+# I also like Support Vector Machines, so we will look at that as well.
+# The Gradient Boosting Classifier consistently had very good F1 scores.
+# We'll look at the Gradient Boosting Classifier as well.
+# The way that we are going to further compare these three algorithms
+# is by looking at the effect of the sample size on the accuracy score
+# for both the training dataset and the cross-validation dataset.
+# For more information about learning curves, read the following documentation: 
+# http://scikit-learn.org/stable/modules/learning_curve.html
+
+
+
+
+def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
+                        n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
+    """
+    Plots a learning curve. http://scikit-learn.org/stable/modules/learning_curve.html
+    """
+    plt.figure()
+    plt.title(title)
+    if ylim is not None:
+        plt.ylim(*ylim)
+    plt.xlabel("Training examples")
+    plt.ylabel("Score")
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+    plt.grid()
+
+    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.1,
+                     color="r")
+    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
+             label="Training score")
+    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+             label="Cross-validation score")
+
+    plt.legend(loc="best")
+    return plt
+
+
+plot_learning_curve(LogisticRegression(), 'Learning Curve For Logistic Regression Classifier', X_train, Y_train, (0.75,0.95), 10)
+plot_learning_curve(GradientBoostingClassifier(), 'Learning Curve For Gradient Boosting Classifier', X_train, Y_train, (0.75,0.95), 10)
+plot_learning_curve(SVC(), 'Learning Curve For SVM Classifier', X_train, Y_train, (0.75,0.95), 10)
+
+# Great!  These learning curves were really informative.  It looks like maybe the 
+# Logistic Regression is overfitting the data.  And the Gradient Boosting Classifier
+# maybe needs an even larger sample size before the training curve and cross-validation
+# curve are ready to converge.  It looks like maybe the Support Vector Machine
+# algorithm is the best classifier to use for this application.  The learning curve
+# you see here for the Support Vector Machine suggests that we do not suffer too much
+# from either overfitting or bias.
+
+
+
+# So now let's run the Support Vector Machine Classifier
+# But first, we should try to optimize the parameters for the SVM.
+
+
+def runSupportVectorMachine(a, b):
+    """
+    This function takes as an input the four arrays that are generated by the
+    train_test_split function and runs them through a Support Vector Machine classifier.
+    """
+
+    model = SVC()
+    model.fit(a, b)
+    print('')
+    print('Support Vector Machine SVC Classifier:')
+    print('')
+    print('Parameters')
+    print('')
+    print(model)
+    return
+
+runSupportVectorMachine(X_train, Y_train)
+
+# Next we will generate an accuracy score and F1 score by using cross-validation with K-Fold
+
+model = SVC()
+
+
+def crossValidateWithKFold(input):
+    """
+    This function takes as an input the four arrays that are generated by the
+    train_test_split function and spits out a K-Folds Cross-Validation Accuracy Score
+    """
+
+    kfold = model_selection.KFold(n_splits=10, random_state=7)
+    cv_results = model_selection.cross_val_score(model, X_train, Y_train, cv=kfold, scoring='accuracy')
+    print('')
+    print('K-Fold Cross-Validation Accuracy:')
+    print('')
+    print(cv_results.mean())
+    return
+
+crossValidateWithKFold(trainingData)
+
+def calculateF1Score(input):
+    """
+    This function takes as an input the four arrays that are generated by the
+    train_test_split function and spits out a K-Folds Cross-Validation F1 Score
+    """
+
+    kfold = model_selection.KFold(n_splits=10, random_state=7)
+    cv_results = model_selection.cross_val_score(model, X_train, Y_train, cv=kfold, scoring='f1_macro')
+    print('')
+    print('K-Fold F1 Score:')
+    print('')
+    print(cv_results.mean())
+    print('')
+    return
+
+calculateF1Score(trainingData)
+
+# It looks like our model can predict with about 80% accuracty whether or not a given
+# passenger survived the sinking of the Titanic.  That is pretty good!
+# In order to improve the accuracty of our model, however, we will need to add
+# back some of the features that we previously removed, and we will need to 
+# engineer some new features.  I will do this another day.
+
+
+# to do:
+# add back old variables such as embarked
+# invent a new variable such as isAlone
+
+
+# but for now we will submit the answer
+
+testingData2 = pd.read_csv('test.csv')
+model = SVC()
+model.fit(X_train, Y_train)
+prediction = model.predict(testingData)
+submission = pd.DataFrame({
+    "PassengerId": testingData2["PassengerId"],
+    "Survived": prediction})
+submission.to_csv('new_submission.csv', index=False)
+
+# to finish the submission process, upload the file 'new_submission.csv' to Kaggle
+
+
+#### Extra Code ####
+
+
+# supplementary code #
+
+
+# Run a logistic regression
+
+#def runLogisticRegression(a, b, c, d):
+#
+#    model = LogisticRegression()
+#    model.fit(a, b)
+#    prediction = model.predict(c)
+#    print('')
+#    print('Logistic Regression:')
+#    print('')
+#    print('Accuracy:')
+#    print(accuracy_score(d, prediction))
+#    print('')
+#    print('Score:')
+#    print(model.score(a, b)) 
+#    return
+#
+#runLogisticRegression(X_train, Y_train, X_test, Y_test)
+#
+## Cross-validation with K-Fold
+#
+#def crossValidateWithKFold(input):
+#    kfold = model_selection.KFold(n_splits=10, random_state=7)
+#    cv_results = model_selection.cross_val_score(model, X_train, Y_train, cv=kfold, scoring='accuracy')
+#    print('')
+#    print('Kfold Cross-Validation Score:')
+#    print('')
+#    print(cv_results.mean())
+#    return
+#
+#crossValidateWithKFold(trainingData)
+
+
+
+
+# Run a gradient boosting classifier
+
+#def runGradientBoostingClassifier(a, b, c, d):
+#
+#    model = GradientBoostingClassifier()
+#    model.fit(a, b)
+#    prediction = model.predict(c)
+#    print('')
+#    print('Gradient Boosting Classifier:')
+#    print('')
+#    return
+
+#runGradientBoostingClassifier(X_train, Y_train, X_test, Y_test)
+
+
+# Now we will run the SVM w/ the selected parameters.
+
+
+
+#def runSupportVectorMachine(a, b):
+#    """
+#    This function takes as an input the four arrays that are generated by the
+#    train_test_split function and runs them through a Support Vector Machine classifier.
+#    """
+#    #model = SVC()
+#    model.fit(a, b)
+#    print('')
+#    print('Support Vector Machine SVC Classifier:')
+#    print('')
+#    print('Parameters')
+#    print('')
+#    print(model)
+#    return
+#
+#runSupportVectorMachine(X_train, Y_train)
+
+#from sklearn.model_selection import GridSearchCV
+#
+#
+#def selectParametersForSVM(a, b):
+#
+#    model = SVC()
+#    parameters = {'C': [0.2, 0.4, 0.6, 1, 1.5, 2],
+#                  'kernel': ['linear', 'poly', 'rbf', 'sigmoid']}
+#    accuracy_scorer = make_scorer(accuracy_score)
+#    grid_obj = GridSearchCV(model, parameters, scoring=accuracy_scorer)
+#    grid_obj = grid_obj.fit(a, b)
+#    model = grid_obj.best_estimator_
+#    model.fit(a, b)
+#    print('Selected Parameters for SVM:')
+#    print('')
+#    print(model)
+#    print('')
+#    return
+#
+#selectParametersForSVM(X_train, Y_train)
+
+
+# First, let's add back the column titled "Embarked" which tells us which door the passenger used to board the ship.
+# Let's also add back "SibSp" which tells us if there were any siblings.
+# And let's also add back "Parch" which tells us if there were any parents.
+# We will do this by loading the original data all over agin.
+
+#trainingData = pd.read_csv('train.csv')
+#testingData = pd.read_csv('test.csv')
+#combinedData = [trainingData, testingData]
+#
+#trainingData = trainingData.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
+#testingData = testingData.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
+#
+## And again we need to replace missing values with median values and convert categorial data to numerical form. 
+#
+#replaceMissingValuesWithMedianValues(trainingData)
+#replaceMissingValuesWithMedianValues(testingData)
+#sexToBinary(trainingData)
+#sexToBinary(testingData
+#ageToCategory(trainingData)
+#ageToCategory(testingData)
+#fareToCategory(trainingData)
+#fareToCategory(testingData)
+
+# But now we need to process our new columns: Embarked, SibSp, and Parch.
+

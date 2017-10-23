@@ -1,0 +1,565 @@
+# This script can be used to convert continuous linescan data of any length into ten consecutive binned averages.
+# An application of this script would be to determine the average fluroescence intensity for ten equally spaced regions across a structure of interest during fluorescence microscopy.
+
+# The linescan data should be begin in Row 7 of Sheet 1.
+
+
+Sub binning_avg_A()
+
+Dim div As Integer
+div = Sheet1.Range("A7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("A" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 23).Value = sum12 / div
+
+Next i
+
+End Sub
+
+
+Sub binning_avg_B()
+
+Dim div As Integer
+div = Sheet1.Range("B7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("B" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 24).Value = sum12 / div
+
+Next i
+
+End Sub
+
+
+Sub binning_avg_C()
+
+Dim div As Integer
+div = Sheet1.Range("C7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("C" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 25).Value = sum12 / div
+
+Next i
+
+End Sub
+
+
+Sub binning_avg_D()
+
+Dim div As Integer
+div = Sheet1.Range("D7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("D" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 26).Value = sum12 / div
+
+Next i
+
+End Sub
+
+
+Sub binning_avg_E()
+
+Dim div As Integer
+div = Sheet1.Range("E7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("E" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 27).Value = sum12 / div
+
+Next i
+
+End Sub
+
+
+Sub binning_avg_F()
+
+Dim div As Integer
+div = Sheet1.Range("F7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("F" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 28).Value = sum12 / div
+
+Next i
+
+End Sub
+
+
+Sub binning_avg_G()
+
+Dim div As Integer
+div = Sheet1.Range("G7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("G" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 29).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_H()
+
+Dim div As Integer
+div = Sheet1.Range("H7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("H" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 30).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_i()
+
+Dim div As Integer
+div = Sheet1.Range("i7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("i" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 31).Value = sum12 / div
+
+Next i
+
+End Sub
+
+Sub binning_avg_j()
+
+Dim div As Integer
+div = Sheet1.Range("j7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("j" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 32).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_k()
+
+Dim div As Integer
+div = Sheet1.Range("k7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("k" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 33).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_L()
+
+Dim div As Integer
+div = Sheet1.Range("L7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("L" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 34).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_M()
+
+Dim div As Integer
+div = Sheet1.Range("M7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("M" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 35).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_N()
+
+Dim div As Integer
+div = Sheet1.Range("N7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("N" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 36).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_O()
+
+Dim div As Integer
+div = Sheet1.Range("O7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("O" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 37).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_P()
+
+Dim div As Integer
+div = Sheet1.Range("P7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("O" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 38).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_Q()
+
+Dim div As Integer
+div = Sheet1.Range("Q7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("O" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 39).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_R()
+
+Dim div As Integer
+div = Sheet1.Range("R7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("O" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 40).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_S()
+
+Dim div As Integer
+div = Sheet1.Range("S7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("O" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 41).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_T()
+
+Dim div As Integer
+div = Sheet1.Range("T7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("O" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 42).Value = sum12 / div
+
+Next i
+
+End Sub
+Sub binning_avg_U()
+
+Dim div As Integer
+div = Sheet1.Range("U7").End(xlDown).Row \ 11
+Dim sum12 As Double
+Dim y As Integer
+y = 7
+Dim i As Integer
+
+For i = 1 To 11
+
+sum12 = 0
+
+Dim k As Integer
+k = 0
+Do
+    sum12 = sum12 + Sheet1.Range("O" & y)
+    k = k + 1
+    y = y + 1
+    Loop Until k = div
+
+Sheet1.Cells(i, 43).Value = sum12 / div
+
+Next i
+
+End Sub

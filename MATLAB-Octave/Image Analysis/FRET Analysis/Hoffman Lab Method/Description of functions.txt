@@ -1,0 +1,11 @@
+Here is just some quick info about each of the functions I have sent.
+
+The PreParams_gen function asks for the name of a folder that should contain your stacks of bead images for registration, your darkfield images for each imaging channel, and your shade images for each imaging channel. There are specific formats that the filenames have to follow, and the three FRET channel names are pre-allocated to be "TVFRET" (FRET channel), "Venus" (acceptor channel), and "Teal" (donor channel). It will calculate all of the registration, shade correction, and background parameters to be used for the subsequent FRET analysis. It will output a file called "PreParams.mat" that you must include in the folder with your FRET images for analysis.
+
+The GetInfo_FRET function organizes all necessary experimental parameters and options for subsequent analysis. It saves these parameters to a file called "SaveParams_folder name.mat", whose contents can be referenced later. We find this useful for organizing a main script to call the FRET functions in sequence, but you can decide whether or not to use it.
+
+The preprocess function utilizes the PreParams file created by the PreParams_gen function to correct all of the raw data files according to the process outlined in our methods paper. The function header gives more details regarding the specific steps.
+
+The fret_bledth function calculates the bleed-throughs based on images taken of donor-only and acceptor-only expressing cells. The function header gives a detailed description of the inputs of the function. It will output the acceptor bleed-through and donor bleed-through as numbers and will also plot the bleed-through and cross-talk curves to check for linearity.
+
+The fret_correct function corrects the experimental images based on the bleed-through values calculated by the fret_bledth function. The function header gives a detailed description of the inputs and outputs of the function. This is only valid for linear bleed-throughs (ones that don't vary with intensity), though we do have a method for addressing nonlinear bleed-throughs if you run into that issue.

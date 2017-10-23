@@ -1,0 +1,885 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Oct  9 10:15:54 2017
+@author: ptm
+
+This Python 3 script takes as an input the CSV file from the Kaggle Breast Cancer Wisconsin Dataset (https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
+This CSV file contains information on various features describing the size and shape of the nucleus.
+The measurements were made from digital images of a fine needle aspirate of a breast tissue mass.
+This output of this script is a prediction of whether a given sample is benign or malignant.
+
+"""
+
+# Jupyter Notebook: https://www.kaggle.com/paultimothymooney/predict-cancer-pandas-matplotlib-sklearn/
+
+
+
+# The nucleus is an organelle present within all eukaryotic cells, including human cells.
+# Abberant nuclear shape can be used to identify cancer cells (e.g. pap smear tests and the diagnosis of cervical cancer).
+# Likewise, a growing body of literature suggests that there is some connection 
+# between the shape of the nucleus and human disease states such as cancer and aging.
+# As such, the quantitative analysis of nuclear size of shape has important biomedical applications.
+
+
+# For more information, please refer to the following resources:
+# http://www.uwyo.edu/levy_lab/
+# Vukovic LD, Jevtic P, Edens LJ, Levy DL. (2016) New Insights into Mechanisms and Functions of Nuclear Size Regulation. Int Rev Cell Mol Biol. 322:1–59.
+# Webster, M., Witkin, K.L., and Cohen-Fix, O. (2009). Sizing up the nucleus: nuclear shape, size and nuclear-envelope assembly. J. Cell Sci. 122, 1477–1486.
+# Zink, D., Fischer, A.H., and Nickerson, J.A. (2004). Nuclear structure in cancer cells. Nat. Rev. Cancer 4, 677–687.
+
+
+
+# We will begin our analysis by importing two Python libraries that are helpful when analyzing numerical data.  
+# We will use "pandas" for the majority of our numerical computations.
+
+import pandas as pd
+import numpy as np
+
+# We will also import two Python libraries that are helpful when plotting data.
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+# Next I need to set my current working directory to the folder that contains the relevant CSV files.
+# These data files were downloaded from https://www.kaggle.com/uciml/breast-cancer-wisconsin-data.
+
+import os
+os.chdir('/Users/ptm/desktop/Current_working_directory')
+
+
+# We will begin by loading the relevant data.
+
+trainingData = pd.read_csv('data.csv')
+
+# Next we will inspect the data.  We will print the names of each column.
+
+def printColumnTitles(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is as follows: (1) the name of each column;
+    """  
+    
+    print('')
+    print('Column Values:')
+    print('')
+    print(input.columns.values)
+    print('')
+    return
+printColumnTitles(trainingData)
+
+# Some of these columns are redundant.  For the sake of simplicity, I am going to delete most of the columns.  Don't worry, I'lll add them back later.
+
+
+trainingData = trainingData.drop(['id', 'radius_mean', 'perimeter_mean',
+ 'compactness_mean', 'fractal_dimension_mean', 'radius_se',
+ 'texture_se', 'perimeter_se', 'smoothness_se', 'compactness_se',
+ 'concavity_se', 'concave points_se', 'fractal_dimension_se',
+ 'radius_worst', 'texture_worst', 'perimeter_worst',
+ 'smoothness_worst', 'compactness_worst', 'concavity_worst',
+ 'concave points_worst', 'fractal_dimension_worst', 'Unnamed: 32', 'area_se', 'symmetry_se',
+ 'area_worst', 'symmetry_worst', 'concavity_mean'], axis=1)
+
+    
+
+# These are the new column values after simplification.    
+    
+
+def describeDataAgain(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is as follows: (1) the name of each column; (2) the contents of the first 5 rows; and
+    (3) the number of missing/NaN values in each column; 
+    """ 
+    
+    print('')
+    print('New summary of data after making changes:')
+    print('')
+    print('Column Values:')
+    print('')
+    print(input.columns.values)
+    print('')
+    print('First Few Values:')
+    print('')
+    print(input.head())
+    print('')
+    print('Null Value Counts:')
+    print('')
+    print(input.isnull().sum())
+    return
+
+describeDataAgain(trainingData)
+
+
+
+# Now let's plot some of that data.  I want to know if the nuclei from the malignant
+# samples were larger than the nuclei from the benign samples.
+
+
+  
+def plotSizeDistribution(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is three graphs that each illustrate the two distributions of nuclear sizes for samples
+    that are either malignant or benign.
+    """  
+    sns.set_style("whitegrid")
+    distributionOne = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionOne.map(plt.hist, 'area_mean', bins=30)
+    distributionOne.add_legend()
+    distributionOne.set_axis_labels('area_mean', 'Count')
+    distributionOne.fig.suptitle('Area vs Diagnosis ((Blue = Malignant; Green = Benign)')
+    distributionTwo = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionTwo.map(sns.kdeplot,'area_mean',shade= True)
+    distributionTwo.set(xlim=(0, input['area_mean'].max()))
+    distributionTwo.add_legend()
+    distributionTwo.set_axis_labels('area_mean', 'Proportion')
+    distributionTwo.fig.suptitle('Area vs Diagnosis (Blue = Malignant; Green = Benign)')
+
+    return
+
+plotSizeDistribution(trainingData)
+
+
+# This confirms my prediction that healthy nuclei have a default size
+# and that cancer cells have a wide range of sizes, typically greater than the default size.
+# Let's look at all of the features now.
+
+  
+def plotConcaveDistribution(input):
+    """ 
+  This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is three graphs that each illustrate the two distributions of nuclear shapes for samples
+    that are either malignant or benign.
+    """  
+    sns.set_style("whitegrid")
+    distributionOne = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionOne.map(plt.hist, 'concave points_mean', bins=30)
+    distributionOne.add_legend()
+    distributionOne.set_axis_labels('concave points_mean', 'Count')
+    distributionOne.fig.suptitle('# of Concave Points vs Diagnosis (Blue = Malignant; Green = Benign)')
+    distributionTwo = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionTwo.map(sns.kdeplot,'concave points_mean',shade= True)
+    distributionTwo.set(xlim=(0, input['concave points_mean'].max()))
+    distributionTwo.add_legend()
+    distributionTwo.set_axis_labels('concave points_mean', 'Proportion')
+    distributionTwo.fig.suptitle('# of Concave Points vs Diagnosis (Blue = Malignant; Green = Benign)')
+
+    return
+
+plotConcaveDistribution(trainingData)
+
+
+def plotSymmetryDistribution(input):
+    """ 
+  This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is three graphs that each illustrate the two distributions of nuclear shapes for samples
+    that are either malignant or benign.
+    """  
+    sns.set_style("whitegrid")
+    distributionOne = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionOne.map(plt.hist, 'symmetry_mean', bins=30)
+    distributionOne.add_legend()
+    distributionOne.set_axis_labels('symmetry_mean', 'Count')
+    distributionOne.fig.suptitle('Symmetry vs Diagnosis (Blue = Malignant; Green = Benign)')
+    distributionTwo = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionTwo.map(sns.kdeplot,'symmetry_mean',shade= True)
+    distributionTwo.set(xlim=(0, input['symmetry_mean'].max()))
+    distributionTwo.add_legend()
+    distributionTwo.set_axis_labels('symmetry_mean', 'Proportion')
+    distributionTwo.fig.suptitle('Symmetry vs Diagnosis (Blue = Malignant; Green = Benign)')
+
+    return
+
+plotSymmetryDistribution(trainingData)
+
+
+def plotTextureDistribution(input):
+    """ 
+  This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is three graphs that each illustrate the two distributions of nuclear shapes for samples
+    that are either malignant or benign.
+    """  
+    sns.set_style("whitegrid")
+    distributionOne = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionOne.map(plt.hist, 'texture_mean', bins=30)
+    distributionOne.add_legend()
+    distributionOne.set_axis_labels('texture_mean', 'Count')
+    distributionOne.fig.suptitle('Texture vs Diagnosis (Blue = Benign; Green = Malignant)')
+    distributionTwo = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionTwo.map(sns.kdeplot,'texture_mean',shade= True)
+    distributionTwo.set(xlim=(0, input['texture_mean'].max()))
+    distributionTwo.add_legend()
+    distributionTwo.set_axis_labels('texture_mean', 'Proportion')
+    distributionTwo.fig.suptitle('Texture vs Diagnosis (Blue = Benign; Green = Malignant)')
+
+    return
+
+plotTextureDistribution(trainingData)
+
+def plotSmoothnessDistribution(input):
+    """ 
+  This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is three graphs that each illustrate the two distributions of nuclear shapes for samples
+    that are either malignant or benign.
+    """  
+    sns.set_style("whitegrid")
+    distributionOne = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionOne.map(plt.hist, 'smoothness_mean', bins=30)
+    distributionOne.add_legend()
+    distributionOne.set_axis_labels('smoothness_mean', 'Count')
+    distributionOne.fig.suptitle('Smoothness vs Diagnosis (Blue = Benign; Green = Malignant)')
+    distributionTwo = sns.FacetGrid(input, hue="diagnosis",aspect=2)
+    distributionTwo.map(sns.kdeplot,'smoothness_mean',shade= True)
+    distributionTwo.set(xlim=(0, input['smoothness_mean'].max()))
+    distributionTwo.add_legend()
+    distributionTwo.set_axis_labels('smoothness_mean', 'Proportion')
+    distributionTwo.fig.suptitle('Smoothness vs Diagnosis (Blue = Benign; Green = Malignant)')
+
+    return
+
+plotSmoothnessDistribution(trainingData)
+
+# Next I will convert the categorical data to numerical form.
+
+def diagnosisToBinary(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a modified dataframe where 0 = "malignant" and 1 = "benign".
+    """ 
+    input["diagnosis"] = input["diagnosis"].astype("category")
+    input["diagnosis"].cat.categories = [0,1]
+    input["diagnosis"] = input["diagnosis"].astype("int")
+    return
+
+diagnosisToBinary(trainingData)    
+    
+
+# Next, I want to convert all continuous numerical data into values between 1 and 5
+# Note that I decided where to begin each bin (categories 0 to 5) based on the previous distributions. That we just plotted.
+# By using values between 1 and 5, it will help our classification algorithms.
+
+def areaToCategory(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a modified dataframe where the area measurements are replaced with numbers between 
+    zero and five based on their position within predetermined bins.
+    """ 
+    
+    input['area_mean'] = input.area_mean.fillna(-0.5)
+    bins = (-0.01, 250, 750, 1250, 2000, 10000)
+    categories = pd.cut(input.area_mean, bins, labels=False)
+    input.area_mean = categories
+    return
+
+areaToCategory(trainingData)
+
+
+
+def concaveToCategory(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a modified dataframe where the shape measurements are replaced with numbers between 
+    zero and five based on their position within predetermined bins.
+    """ 
+    # Get rid of the space in the file name
+    cols = trainingData.columns
+    cols = cols.map(lambda x: x.replace(' ', '_') if isinstance(x, (str, bytes)) else x)
+    trainingData.columns = cols
+    # Run the function
+    input['concave_points_mean'] = input.concave_points_mean.fillna(-0.5)
+    bins = (-0.01, 0.03, 0.06, 0.1, 1.0)
+    categories = pd.cut(input.concave_points_mean, bins, labels=False)
+    input.concave_points_mean = categories
+    return
+
+concaveToCategory(trainingData)
+
+
+def symmetryToCategory(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a modified dataframe where the shape measurements are replaced with numbers between 
+    zero and five based on their position within predetermined bins.
+    """ 
+    
+    input['symmetry_mean'] = input.symmetry_mean.fillna(-0.5)
+    bins = (-0.01, 0.15, 0.17, 0.2, 1.0)
+    categories = pd.cut(input.symmetry_mean, bins, labels=False)
+    input.symmetry_mean = categories
+    return
+
+symmetryToCategory(trainingData)
+
+
+def textureToCategory(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a modified dataframe where the shape measurements are replaced with numbers between 
+    zero and five based on their position within predetermined bins.
+    """ 
+    
+    input['texture_mean'] = input.texture_mean.fillna(-0.5)
+    bins = (-0.01, 10, 15, 19, 25, 100)
+    categories = pd.cut(input.texture_mean, bins, labels=False)
+    input.texture_mean = categories
+    return
+
+textureToCategory(trainingData)
+
+def smoothnessToCategory(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a modified dataframe where the shape measurements are replaced with numbers between 
+    zero and five based on their position within predetermined bins.
+    """ 
+    
+    input['smoothness_mean'] = input.smoothness_mean.fillna(-0.5)
+    bins = (-0.01, 0.07, 0.09, 0.11, .13, 1)
+    categories = pd.cut(input.smoothness_mean, bins, labels=False)
+    input.smoothness_mean = categories
+    return
+
+smoothnessToCategory(trainingData)
+
+# Now this is what our new data looks like:
+
+describeDataAgain(trainingData)
+
+
+
+# Now I will look at all of the variables together, using a heatmap.
+
+
+def makeAHeatMap(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a heatmap showing the relationship between each numerical feature; 
+    """  
+    
+    plt.figure(figsize=[8,6])
+    heatmap = sns.heatmap(input.corr(), vmax=1.0, square=True, annot=True)
+    heatmap.set_title('Pearson Correlation Coefficients')
+
+    return
+    
+makeAHeatMap(trainingData)
+
+
+# Here with this heatmap we can see that big, mis-shapen nuclei are typicaly from cancerous samples.
+# Let's explore that in more detail.
+
+
+
+def pivotTheData(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a couple of pivot tables showing the relationship between each feature.
+    """    
+    
+    print('')
+    print('Pivot Tables:')
+    print('')
+    print(input[["area_mean", "diagnosis"]].groupby(['area_mean'], as_index=False).mean().sort_values(by='diagnosis', ascending=False))
+    print('')
+    print(input[["concave_points_mean", "diagnosis"]].groupby(['concave_points_mean'], as_index=False).mean().sort_values(by='diagnosis', ascending=False))
+    print('')
+    print(input[['symmetry_mean', 'diagnosis']].groupby(['symmetry_mean'], as_index=False).mean().sort_values(by='diagnosis', ascending=False))
+    print('')
+    print(input[['texture_mean', 'diagnosis']].groupby(['texture_mean'], as_index=False).mean().sort_values(by='diagnosis', ascending=False))
+    print('')
+    print(input[['smoothness_mean', 'diagnosis']].groupby(['smoothness_mean'], as_index=False).mean().sort_values(by='diagnosis', ascending=False))
+    print('')
+    return
+
+pivotTheData(trainingData)
+
+
+def plotTheData(input):
+    """ 
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a bunch of bar graphs illustrating the relationships between features.
+    """  
+    
+    fig = plt.figure(figsize=[10,8])
+    fig.subplots_adjust(hspace=1.0)
+    plt.subplot(321)
+    plotOne = sns.barplot('area_mean', 'diagnosis', data=input, capsize=.1, linewidth=2.5, facecolor=(1, 1, 1, 0), errcolor=".2", edgecolor=".2")
+    plotOne.set_title('Diagnosis vs Area')
+    plotOne.set(xlabel='Average Surface Area (0 = smallest nuclei, 4 = largest nuclei)', ylabel='Probability of Malignant Diagnosis')
+    plt.subplot(322)
+    plotTwo = sns.barplot('concave_points_mean', 'diagnosis', data=input, capsize=.1, linewidth=2.5, facecolor=(1, 1, 1, 0), errcolor=".2", edgecolor=".2")
+    plotTwo.set_title('Diagnosis vs # Concave Points \n (0 = least points, 3 = most points)')
+    plt.subplot(323)
+    plotTwo = sns.barplot('texture_mean', 'diagnosis', data=input, capsize=.1, linewidth=2.5, facecolor=(1, 1, 1, 0), errcolor=".2", edgecolor=".2")
+    plotTwo.set_title('Diagnosis vs Texture \n (0 = low gray value stdev, 4 = high gray value stdev)')
+    plt.subplot(324)
+    plotTwo = sns.barplot('symmetry_mean', 'diagnosis', data=input, capsize=.1, linewidth=2.5, facecolor=(1, 1, 1, 0), errcolor=".2", edgecolor=".2")
+    plotTwo.set_title('Diagnosis vs Symmetry \n (0 = low symmetry score, 3 = high symmetry score))') 
+    plt.subplot(325)
+    plotTwo = sns.barplot('smoothness_mean', 'diagnosis', data=input, capsize=.1, linewidth=2.5, facecolor=(1, 1, 1, 0), errcolor=".2", edgecolor=".2")
+    plotTwo.set_title('Diagnosis vs Smoothness \n (0 = low variation in radius lengths, 0 = high variation in radius lengths)') 
+plotTheData(trainingData)
+
+
+# Great!  This means that our classification algorithms should have something
+# good to work with.  Next we will identify a suitable classification algorithm
+# that we can use to predict whether or not a given sample is malignant.
+
+
+
+# To do this, we will import some additional Python libraries that contain
+# methods and algorithms that are helpful for machine learning applications.
+
+from sklearn import model_selection
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import learning_curve
+
+#from sklearn.metrics import make_scorer, accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC, LinearSVC
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+
+
+
+# Furthermore, we will need to split up our training data, setting aside 20%
+# of the training data for cross-validation testing, such that we can avoid
+# potentially overfitting the data.
+
+
+def splitData(input):
+    """
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is that 20% of the training data is set aside for cross-validation testing.
+    In doing this, it transforms the two arrays (xValues, yValues) into four arrays (X_train, X_test, Y_train, and Y_test).
+    """
+    X_train = 0
+    X_test = 0
+    Y_train = 0
+    Y_test = 0
+    xValues = input.drop(['diagnosis'], axis=1)
+    yValues = input['diagnosis']
+    X_train, X_test, Y_train, Y_test = train_test_split(xValues, yValues, test_size=0.2, random_state=23)
+    return
+
+splitData(trainingData)
+
+
+# for the Jupyter Notebook I have to run the contents of splitData(input) instead of just calling the function for some reason.
+X_train = 0
+X_test = 0
+Y_train = 0
+Y_test = 0
+xValues = trainingData.drop(['diagnosis'], axis=1)
+yValues = trainingData['diagnosis']
+X_train, X_test, Y_train, Y_test = train_test_split(xValues, yValues, test_size=0.2, random_state=23)
+# End splitData function
+
+
+# There are a lot of different classification algorithms to choose between.
+# Let's compare nine of them.
+
+
+
+def compareABunchOfDifferentModelsAccuracy(a, b, c, d):
+    """
+    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+    The output is a table and boxplot illustrating the accuracy score for each of nine algorithms given this input.
+    """    
+
+    print('')
+    print('Compare Multiple Classifiers:')
+    print('')
+    print('K-Fold Cross-Validation Accuracy:')
+    print('')
+    models = []
+    models.append(('LR', LogisticRegression()))
+    models.append(('RF', RandomForestClassifier()))
+    models.append(('KNN', KNeighborsClassifier()))
+    models.append(('SVM', SVC()))
+    models.append(('LSVM', LinearSVC()))
+    models.append(('GNB', GaussianNB()))
+    models.append(('DTC', DecisionTreeClassifier()))
+    models.append(('GBC', GradientBoostingClassifier()))
+    models.append(('LDA', LinearDiscriminantAnalysis()))
+        
+    resultsAccuracy = []
+    names = []
+    for name, model in models:
+        model.fit(a, b)
+        kfold = model_selection.KFold(n_splits=10, random_state=7)
+        accuracy_results = model_selection.cross_val_score(model, c, d, cv=kfold, scoring='accuracy')
+        resultsAccuracy.append(accuracy_results)
+        names.append(name)
+        accuracyMessage = "%s: %f (%f)" % (name, accuracy_results.mean(), accuracy_results.std())
+        print(accuracyMessage)
+
+    
+    # boxplot algorithm comparison
+    fig = plt.figure()
+    fig.suptitle('Algorithm Comparison: Accuracy')
+    ax = fig.add_subplot(111)
+    plt.boxplot(resultsAccuracy)
+    ax.set_xticklabels(names)
+    ax.set_ylabel('Cross-Validation: Accuracy Score')
+    plt.show()
+    return
+
+
+compareABunchOfDifferentModelsAccuracy(X_train, Y_train, X_test, Y_test)
+
+
+def defineModels():
+    """
+    This function just defines each abbreviation used in the previous function (e.g. LR = Logistic Regression)
+    """
+    print('')
+    print('LR = LogisticRegression')
+    print('RF = RandomForestClassifier')
+    print('KNN = KNeighborsClassifier')
+    print('SVM = Support Vector Machine SVC')
+    print('LSVM = LinearSVC')
+    print('GNB = GaussianNB')
+    print('DTC = DecisionTreeClassifier')
+    print('GBC = GradientBoostingClassifier')
+    print('LDA = LinearDiscriminantAnalysis')
+    print('')
+    return
+
+defineModels()
+
+
+
+# It looks like all nine of these algorithms can do a decent job at this classification task.
+# Here we are looking at the "Accuracy Score".  But there is another metric called the F1
+# score that does an even better job of comparing model performance.  Let's try that now.
+
+
+#def compareABunchOfDifferentModelsF1Score(a,b,c,d):
+#    """
+#    This function takes as an input the dataframe "trainingData" which contains the data from "data.csv".  
+#    The output is a table and boxplot illustrating the F1 score for each of nine algorithms given this input.
+#    """   
+#
+#    print('')
+#    print('Compare Multiple Classifiers:')
+#    print('')
+#    print('F1 Score:')
+#    print('')
+#    models = []
+#    models.append(('LR', LogisticRegression()))
+#    models.append(('RF', RandomForestClassifier()))
+#    models.append(('KNN', KNeighborsClassifier()))
+#    models.append(('SVM', SVC()))
+#    models.append(('LSVM', LinearSVC()))
+#    models.append(('GNB', GaussianNB()))
+#    models.append(('DTC', DecisionTreeClassifier()))
+#    models.append(('GBC', GradientBoostingClassifier()))
+#    models.append(('LDA', LinearDiscriminantAnalysis()))
+#        
+#    resultsF1 = []
+#    names = []
+#    for name, model in models:
+#        model.fit(a, b)
+#        kfold = model_selection.KFold(n_splits=10, random_state=7)
+#        f1_results = model_selection.cross_val_score(model, c, d, cv=kfold, scoring='f1_macro')
+#        resultsF1.append(f1_results)
+#        names.append(name)
+#        f1Message = "%s: %f (%f)" % (name, f1_results.mean(), f1_results.std())
+#        print(f1Message)
+#        
+#    fig = plt.figure()
+#    fig.suptitle('Algorithm Comparison: F1 Score')
+#    ax = fig.add_subplot(111)
+#    plt.boxplot(resultsF1)
+#    ax.set_xticklabels(names)
+#    ax.set_ylabel('Cross-Validation: F1 Score')
+#    plt.show()
+#    return
+#
+#compareABunchOfDifferentModelsF1Score(X_train, Y_train, X_test, Y_test)
+#defineModels()
+
+
+
+# Again, it looks like all nine algorithms do a pretty decent job.
+# Let's look at three of them in more detail.
+# Logistic Regression is my favorite algorithm, so let's look at that.
+# I also like Support Vector Machines, so we will look at that as well.
+# The K-Nearest Neighbors Classifier consistently had very good F1 scores.
+# We'll look at the K-Nearest Neighbors Classifier as well.
+# And finally, let's look at the LinearDiscriminantAnalysis Classifier as well.
+# The way that we are going to further compare these four algorithms
+# is by looking at the effect of the sample size on the accuracy score
+# for both the training dataset and the cross-validation dataset.
+# For more information about learning curves, read the following documentation: 
+# http://scikit-learn.org/stable/modules/learning_curve.html
+
+
+
+
+def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
+                        n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
+    """
+    Plots a learning curve. http://scikit-learn.org/stable/modules/learning_curve.html
+    """
+    plt.figure()
+    plt.title(title)
+    if ylim is not None:
+        plt.ylim(*ylim)
+    plt.xlabel("Training examples")
+    plt.ylabel("Score")
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+    plt.grid()
+
+    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.1,
+                     color="r")
+    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
+             label="Training score")
+    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+             label="Cross-validation score")
+
+    plt.legend(loc="best")
+    return plt
+
+
+plot_learning_curve(LogisticRegression(), 'Learning Curve For Logistic Regression Classifier', X_train, Y_train, (0.85,1), 10)
+plot_learning_curve(SVC(), 'Learning Curve For SVM Classifier', X_train, Y_train, (0.85,1), 10)
+plot_learning_curve(LinearDiscriminantAnalysis(), 'Learning Curve For LDA Classifier', X_train, Y_train, (0.85,1), 10)
+plot_learning_curve(KNeighborsClassifier(), 'Learning Curve For K-Nearest Neighbors Classifier', X_train, Y_train, (0.85,1), 10)
+
+
+
+# Great!  These learning curves were really informative.  It looks like maybe the 
+# Logistic Regression and LDA are both overfitting the data.  And the K-Nearest Neighbor Classifier
+# maybe needs an even larger sample size before the training curve and cross-validation
+# curve are ready to converge.  It looks like maybe the Support Vector Machine
+# algorithm is the best classifier to use for this application.  The learning curve
+# you see here for the Support Vector Machine suggests that we do not suffer too much
+# from either overfitting or bias.
+
+
+# So now let's run the Support Vector Machine Classifier
+
+
+# Optimize Parameters for SVM
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer, accuracy_score
+
+def selectParametersForSVM(a, b, c, d):
+
+    model = SVC()
+    parameters = {'C': [0.01, 0.1, 0.5, 1.0, 5.0, 10, 25, 50, 100],
+                  'kernel': ['linear', 'poly', 'rbf', 'sigmoid']}
+    accuracy_scorer = make_scorer(accuracy_score)
+    grid_obj = GridSearchCV(model, parameters, scoring=accuracy_scorer)
+    grid_obj = grid_obj.fit(a, b)
+    model = grid_obj.best_estimator_
+    model.fit(a, b)
+    print('Selected Parameters for SVM:')
+    print('')
+    print(model)
+    print('')
+#    predictions = model.predict(c)
+#    print(accuracy_score(d, predictions))
+#    print('Logistic Regression - Training set accuracy: %s' % accuracy_score(d, predictions))
+    kfold = model_selection.KFold(n_splits=10, random_state=7)
+    accuracy = model_selection.cross_val_score(model, c, d, cv=kfold, scoring='accuracy')
+    mean = accuracy.mean() 
+    stdev = accuracy.std()
+    print('Support Vector Machine - Training set accuracy: %s (%s)' % (mean, stdev))
+    print('')
+    return
+
+selectParametersForSVM(X_train, Y_train, X_test, Y_test)
+
+
+# It looks like our model can predict with about 90% accuracty whether or not a given
+# sample is malignant.  That is pretty good!
+# In order to improve the accuracty of our model, however, we will need to add
+# back some of the features that we previously removed, and we will need to 
+# engineer some new features.  Furthermore, I will need to add in a feature selection
+# step, and I will also need to add in a parameter optimization step.  I will do this another day.
+
+
+
+
+
+
+
+
+# TO DO
+
+# feature selection
+# parameter optimization
+# add back previous data
+# engineer new features
+
+
+#from sklearn.model_selection import GridSearchCV
+#from sklearn.metrics import make_scorer, accuracy_score
+#
+#def selectParametersForSVM(a, b):
+#
+#    model = SVC()
+#    parameters = {'C': [0.01, 0.1, 0.5, 1.0, 5.0, 10, 25, 50, 100],
+#                  'kernel': ['linear', 'poly', 'rbf', 'sigmoid']}
+#    accuracy_scorer = make_scorer(accuracy_score)
+#    grid_obj = GridSearchCV(model, parameters, scoring=accuracy_scorer)
+#    grid_obj = grid_obj.fit(a, b)
+#    model = grid_obj.best_estimator_
+#    model.fit(a, b)
+#    print('Selected Parameters for SVM:')
+#    print('')
+#    print(model)
+#    print('')
+#    return
+#
+#selectParametersForSVM(X_train, Y_train)
+#
+#
+#def selectParametersForLR(a, b):
+#
+#    model = LogisticRegression()
+#    parameters = {'C': [0.01, 0.1, 0.5, 1.0, 5.0, 10, 25, 50, 100],
+#                  'solver' : ['newton-cg', 'lbfgs', 'liblinear']}
+#    accuracy_scorer = make_scorer(accuracy_score)
+#    grid_obj = GridSearchCV(model, parameters, scoring=accuracy_scorer)
+#    grid_obj = grid_obj.fit(a, b)
+#    model = grid_obj.best_estimator_
+#    model.fit(a, b)
+#    print('Selected Parameters for LR:')
+#    print('')
+#    print(model)
+#    print('')
+#    return
+#
+#selectParametersForLR(X_train, Y_train)
+#
+#def selectParametersForKNN(a, b):
+#
+#    model = KNeighborsClassifier()
+#    parameters = {'n_neighbors': [1, 5, 10, 25, 50, 100],
+#                  'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
+#                  'leaf_size': [1, 5, 10, 25, 50, 100],
+#                  'p': [1,2]}
+#    accuracy_scorer = make_scorer(accuracy_score)
+#    grid_obj = GridSearchCV(model, parameters, scoring=accuracy_scorer)
+#    grid_obj = grid_obj.fit(a, b)
+#    model = grid_obj.best_estimator_
+#    model.fit(a, b)
+#    print('Selected Parameters for KNN:')
+#    print('')
+#    print(model)
+#    print('')
+#    return
+#
+#selectParametersForKNN(X_train, Y_train)
+#
+#
+#
+#
+
+
+
+
+
+
+
+
+
+
+
+#
+#
+#features_mean=list(trainingData.columns[1:7])
+## split dataframe into two based on diagnosis
+#malignant =trainingData[trainingData['diagnosis'] ==1]
+#benign =trainingData[trainingData['diagnosis'] ==0]
+#
+#
+##Stack the data
+#plt.rcParams.update({'font.size': 8})
+#fig, axes = plt.subplots(nrows=4, ncols=2, figsize=(8,10))
+#axes = axes.ravel()
+#for idx,ax in enumerate(axes):
+#    ax.figure
+#    binwidth= (max(trainingData[features_mean[idx]]) - min(trainingData[features_mean[idx]]))/50
+#    ax.hist([malignant[features_mean[idx]],benign[features_mean[idx]]], bins=np.arange(min(trainingData[features_mean[idx]]), max(trainingData[features_mean[idx]]) + binwidth, binwidth) , alpha=0.5,stacked=True, normed = True, label=['Malignant','Benign'],color=['r', 'g'])
+#    ax.legend(loc='upper right')
+#    ax.set_title(features_mean[idx])
+#plt.tight_layout()
+#plt.show()
+#
+#
+#
+
+
+
+#trainingData = trainingData.drop(['radius_mean', 'texture_mean', 'perimeter_mean',
+# 'smoothness_mean', 'compactness_mean', 'concavity_mean',
+# 'concave points_mean', 'fractal_dimension_mean', 'radius_se',
+# 'texture_se', 'perimeter_se', 'smoothness_se', 'compactness_se',
+# 'concavity_se', 'concave points_se', 'fractal_dimension_se',
+# 'radius_worst', 'texture_worst', 'perimeter_worst',
+# 'smoothness_worst', 'compactness_worst', 'concavity_worst',
+# 'concave points_worst', 'fractal_dimension_worst', 'Unnamed: 32'], axis=1)
+#
+## These are the new column values after simplification.    
+#    
+#
+#printColumnTitles(trainingData)
+
+
+
+#
+#def describeTheData(input):
+#    """ 
+#    This function takes as an input the dataframe "trainingData" which contains the data from "train.csv".  
+#    The output is as follows: (1) the name of each column; (2) the number of values in each column; 
+#    (3) the number of missing/NaN values in each column; (4) the contents of the first 5 rows; and
+#    (5) the contents of the last 5 rows.
+#    """  
+#    
+#    print('')
+#    print('Column Values:')
+#    print('')
+#    print(input.columns.values)
+#    print('')
+#    print('Value Counts:')
+#    print('')
+#    print(input.info())
+#    print('')
+#    print('Null Value Counts:')
+#    print('')
+#    print(input.isnull().sum())
+#    print('')
+#    print('First Few Values:')
+#    print('')
+#    print(input.head())
+#    print('')
+#    print('Last Few Values:')
+#    print('')
+#    print(input.tail())
+#    print('')
+##    print('Descriptive Stats:')
+##    print('')
+##    print(input.describe())
+#    return
+#
+#describeTheData(trainingData)
+
+

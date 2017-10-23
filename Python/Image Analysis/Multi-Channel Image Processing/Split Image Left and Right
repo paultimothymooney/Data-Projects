@@ -1,0 +1,26 @@
+# Split Image Left and Right
+
+# This script can be used to process multi-channel images that were aquired using a Photometrics Dual-View Image Splitter and a Digital Camera.
+# An example of an application of this script would be to separate donor, acceptor, or raw FRET channel images that were acquired simultaneously with a single camera during FRET microscopy. 
+# This script will crop all .tif files located in the current working directory without regard to image size.  The original image is divided in half along its vertical axis and both halves are saved as new files.  
+
+# First put the images that you want split into your current working directory or change your current working directory (e.g. os.chdir('/users/paultmooney/desktop/20160424 laptop/test images')).
+# Next run the following script in Python
+
+from PIL import Image
+import glob
+import os
+os.chdir('.')
+listofimages = glob.glob('*.tif')
+for images in listofimages:
+    (name, extension) = os.path.splitext(images)
+    (width, height) = im.size
+    halfwidth = width//2
+    leftcroppedimages = im.crop((0,0,halfwidth,height))
+    rightcroppedimages = im.crop((halfwidth,0,height,height))
+    leftcroppedimages.save(name + '_leftcrop' + '.tif')
+    rightcroppedimages.save(name + '_rightcrop' + '.tif')
+    
+    
+# After running this script, you will find new files in your current working directory that correspond to the left and right halves of the images that were split.
+# This script was developed using the Anaconda installation package, the Spyder IDE, and the SciPy library.

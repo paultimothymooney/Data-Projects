@@ -1,0 +1,12 @@
+# Method “A”: Intensity-based Image Alignment in MATLAB (no GUI)
+
+donor = imread ('D:\PTM\20160310 image analysis matlab pc\images used to make figure s3\raw\donor 20150818\TM_dc_dcsc_bs.tif')
+rawfret = imread ('D:\PTM\20160310 image analysis matlab pc\images used to make figure s3\raw\donor 20150818\TM_fc_dcsc_bs.tif')
+fixed = rawfret
+moving = donor
+imshowpair(fixed, moving, 'Scaling', 'joint')
+falsecolor, blend, diff, montage
+[optimizer, metric] = imregconfig('monomodal')
+movingRegistered = imregister(moving,fixed,'rigid',optimizer,metric)
+imshowpair(fixed, movingRegistered, 'Scaling', 'joint')
+imshow (movingRegistered, [])

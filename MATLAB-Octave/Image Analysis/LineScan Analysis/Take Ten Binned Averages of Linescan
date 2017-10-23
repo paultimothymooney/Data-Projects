@@ -1,0 +1,19 @@
+# This script can be used to convert continuous linescan data of any length into ten consecutive binned averages.
+# An application of this script would be to determine the average fluroescence intensity for ten equally spaced regions across a structure of interest during fluorescence microscopy.
+
+# First, import two columns (X,Y) of data into the MATLAB workspace.  
+# The first column of x values should be named VarName1.  The second column of y values should be named VarName2.
+# Run the following script in MATLAB:
+
+topEdge = 1;
+botEdge = 0;
+numBins = 11;
+binEdges = linspace(botEdge, topEdge, numBins+1);
+[h, whichBin] = histc (VarName1, binEdges);
+for i = 1:numBins
+flagBinMembers = (whichBin == i);
+binMembers = VarName2 (flagBinMembers);
+binMean(i) = mean(binMembers);
+end
+
+# The output will be ten consecutive binned averages per each input of continuous linescan data.

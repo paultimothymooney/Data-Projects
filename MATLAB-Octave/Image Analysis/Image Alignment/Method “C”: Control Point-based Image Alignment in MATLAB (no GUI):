@@ -1,0 +1,12 @@
+# Method “C”: Control Point-based Image Alignment in MATLAB (no GUI):
+
+donor = imread (‘D:\PTM\20160301 image analysis\donor.tif’)
+rawfret = imread (‘D:\PTM\20160301 image analysis\rawfret.tif’)
+donorscaled3408 = mat2gray (donor, [0, 3408])
+rawfretscaled3093 = mat2gray (rawfret, [0, 3093])
+cpselect (donorscaled3408, rawfretscaled3093)
+next, zoom in and select common points then finish by going file=>export points to workspace
+mytform = fitgeotrans (movingPoints, fixedPoints, ‘projective’)
+registered = imwarp (donorscaled3408, mytform)
+donorregistered = registered * 3408
+imagesc (donorregistered)

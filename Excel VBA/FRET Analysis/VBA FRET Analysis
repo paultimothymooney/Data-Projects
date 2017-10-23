@@ -1,0 +1,152 @@
+
+
+'FRET Macro 20151013_a.  This macro uses Microsoft Excel software to produce a concentration corrected FRET image.  It requires the following input: (1) dark current correction image; (2) acceptor shading correction image; (3) donor shading correction image; (4) fret shading correction image; (5) raw acceptor sample image; (6) raw donor sample image; (7) and raw FRET sample image.  These inputs should be 256x512 pixel text images, but the script could easily be modified to accommodate 512x512 pixel images.  Note that the macro has three components that must be run consecutively.'
+
+'This is the first part of the macro'
+
+Sub PartOne()
+
+'The first thing that I do is I define all of the variables that I will use within this first half of the macro.  Note that the Crosstalk Correction Coefficients and the Dark Current constant can be set to whatever value that is appropriate'
+
+Dim i As Integer
+
+Dim CorrectedAcceptorValue As Double
+Dim CorrectedDonorValue As Double
+Dim CorrectedFretValue As Double
+Dim CTCorrectedAcceptorValue As Double
+Dim CTCorrectedDonorValue As Double
+Dim AcceptorShadingMaximum As Double
+Dim DonorShadingMaximum As Double
+Dim FretShadingMaximum As Double
+
+Dim CTCorrectedAcceptorImage As Worksheet
+Dim CTCorrectedDonorImage As Worksheet
+Dim CorrectedFretImage As Worksheet
+
+Set CTCorrectedAcceptorImage = ActiveWorkbook.Worksheets("CTCorrectedAcceptor")
+Set CTCorrectedDonorImage = ActiveWorkbook.Worksheets("CTCorrectedDonor")
+Set CorrectedFretImage = ActiveWorkbook.Worksheets("CTCorrectedFRET")
+
+Const DonorCrosstalkCorrectionCoefficient = 0.02
+Const AcceptorCrosstalkCorrectionCoefficient = 0
+Const DarkCurrent = 1981
+
+AcceptorShadingMaximum = Application.WorksheetFunction.Max(Sheet4.Range("A1:IV512"))
+DonorShadingMaximum = Application.WorksheetFunction.Max(Sheet6.Range("A1:IV512"))
+FretShadingMaximum = Application.WorksheetFunction.Max(Sheet5.Range("A1:IV512"))
+MsgBox " AcceptorShadingMaximum is:" & AcceptorShadingMaximum
+MsgBox " DonorShadingMaximum is:" & DonorShadingMaximum
+MsgBox " FretShadingMaximum is:" & FretShadingMaximum
+
+'Here I have the first bit of real code.  This loop corrects the images for dark current, shading, and crosstalk, and produces three new text images in three new worksheets'
+
+
+For j = 1 To 256
+i = 1
+
+Do
+
+CorrectedAcceptorValue = (Sheet1.Cells(i, j).Value - Sheet7.Cells(i, j).Value) / ((Sheet4.Cells(i, j).Value - Sheet7.Cells(i, j).Value) / (AcceptorShadingMaximum - DarkCurrent))
+CorrectedDonorValue = (Sheet3.Cells(i, j).Value - Sheet7.Cells(i, j).Value) / ((Sheet6.Cells(i, j).Value - Sheet7.Cells(i, j).Value) / (DonorShadingMaximum - DarkCurrent))
+CorrectedFretValue = (Sheet2.Cells(i, j).Value - Sheet7.Cells(i, j).Value) / ((Sheet5.Cells(i, j).Value - Sheet7.Cells(i, j).Value) / (FretShadingMaximum - DarkCurrent))
+CTCorrectedAcceptorValue = CorrectedAcceptorValue - (CorrectedDonorValue * DonorCrosstalkCorrectionCoefficient)
+CTCorrectedDonorValue = CorrectedDonorValue - (CorrectedAcceptorValue * AcceptorCrosstalkCorrectionCoefficient)
+
+CTCorrectedAcceptorImage.Cells(i, j) = CTCorrectedAcceptorValue
+CTCorrectedDonorImage.Cells(i, j) = CTCorrectedDonorValue
+CorrectedFretImage.Cells(i, j) = CorrectedFretValue
+
+i = i + 1
+Loop Until i = 513
+
+Next j
+
+End Sub
+
+'This is the second part of the macro.  It has two main functions.  First, it removes the background signal from all images.  Next, it produces a concentration corrected FRET image.'
+
+Sub PartTwo()
+
+'Again, I begin by defining all of the variables that will be used in the second half of the macro.  Note that the bleed through correction coefficients can be set to whatever value is necessary.'
+
+Dim o As Integer
+
+Dim ConcentrationCorrectedFretValue As Double
+Dim CTBGCorrectedAcceptorValue As Double
+Dim CTBGCorrectedDonorValue As Double
+Dim CTBGCorrectedFretValue As Double
+Dim CTCorrectedAcceptorImageMinimum As Double
+Dim CTCorrectedDonorImageMinimum As Double
+Dim CorrectedFretImageMinimum As Double
+Dim CTCorrectedAcceptorImageStdev As Double
+Dim CTCorrectedDonorImageStdev As Double
+Dim CorrectedFretImageStdev As Double
+Dim CTCorrectedAcceptorSubtractValue As Double
+Dim CTCorrectedDonorSubtractValue As Double
+Dim CorrectedFretSubtractValue As Double
+
+Dim CTBGCorrectedAcceptorImage As Worksheet
+Dim CTBGCorrectedDonorImage As Worksheet
+Dim CTBGCorrectedFretImage As Worksheet
+Dim ConcentrationCorrectedFretImage As Worksheet
+Dim NormalizedFretImage As Worksheet
+
+Set CTBGCorrectedAcceptorImage = ActiveWorkbook.Worksheets("CTBGCorrectedAcceptor")
+Set CTBGCorrectedDonorImage = ActiveWorkbook.Worksheets("CTBGCorrectedDonor")
+Set CTBGCorrectedFretImage = ActiveWorkbook.Worksheets("CTBGCorrectedFRET")
+Set ConcentrationCorrectedFretImage = ActiveWorkbook.Worksheets("ConcentrationCorrectedFRET")
+
+Const DonorBleedthroughCorrectionCoefficient = 0.608
+Const AcceptorBleedthroughCorrectionCoefficient = 0.048
+
+CTCorrectedAcceptorImageMinimum = Application.WorksheetFunction.Min(Sheet9.Range("Y25:HX487"))
+CTCorrectedDonorImageMinimum = Application.WorksheetFunction.Min(Sheet10.Range("Y25:HX487"))
+CorrectedFretImageMinimum = Application.WorksheetFunction.Min(Sheet11.Range("Y25:HX487"))
+MsgBox " CTCorrectedAcceptorImageMinimum is " & CTCorrectedAcceptorImageMinimum
+MsgBox " CTCorrectedDonorImageMinimum is " & CTCorrectedDonorImageMinimum
+MsgBox " CorrectedFretImageMinimum is " & CorrectedFretImageMinimum
+
+CTCorrectedAcceptorImageStdev = Application.WorksheetFunction.StDev(Sheet9.Range("Y462:HX487"))
+CTCorrectedDonorImageStdev = Application.WorksheetFunction.StDev(Sheet10.Range("Y462:HX487"))
+CorrectedFretImageStdev = Application.WorksheetFunction.StDev(Sheet11.Range("Y462:HX487"))
+MsgBox " CTCorrectedAcceptorImageStdev is: " & CTCorrectedAcceptorImageStdev
+MsgBox " CTCorrectedDonorImageStdev is: " & CTCorrectedDonorImageStdev
+MsgBox " CorrectedFretImageStdev is: " & CorrectedFretImageStdev
+
+CTCorrectedAcceptorSubtractValue = CTCorrectedAcceptorImageMinimum - (2 * CTCorrectedAcceptorImageStdev)
+CTCorrectedDonorSubtractValue = CTCorrectedDonorImageMinimum - (2 * CTCorrectedDonorImageStdev)
+CorrectedFretSubtractValue = CorrectedFretImageMinimum - (2 * CorrectedFretImageStdev)
+MsgBox " CTCorrectedAcceptorSubtractValue is: " & CTCorrectedAcceptorSubtractValue
+MsgBox " CTCorrectedDonorSubtractValue is: " & CTCorrectedDonorSubtractValue
+MsgBox " CorrectedFretSubtractValue is: " & CorrectedFretSubtractValue
+
+
+'In this loop, a value is subtracted from each image such that the new minimum value for the entire image will be equal to twice the standard deviation of the image background.  Next the FRET signal is corrected for donor bleedthrough, probe concentration, etc, in order to produce a concentration corrected FRET image.'
+
+For k = 1 To 256
+o = 1
+
+Do
+
+CTBGCorrectedAcceptorValue = Sheet9.Cells(o, k).Value - CTCorrectedAcceptorSubtractValue
+CTBGCorrectedDonorValue = Sheet10.Cells(o, k).Value - CTCorrectedDonorSubtractValue
+CTBGCorrectedFretValue = Sheet11.Cells(o, k).Value - CorrectedFretSubtractValue
+
+CTBGCorrectedAcceptorImage.Cells(o, k) = CTBGCorrectedAcceptorValue
+CTBGCorrectedDonorImage.Cells(o, k) = CTBGCorrectedDonorValue
+CTBGCorrectedFretImage.Cells(o, k) = CTBGCorrectedFretValue
+
+'This bit of code below is particularly important (donor bleedthrough correction, probe concentration correction, etc).'
+
+FI = CTBGCorrectedFretValue - ((DonorBleedthroughCorrectionCoefficient * CTBGCorrectedDonorValue) + (AcceptorBleedthroughCorrectionCoefficient * CTBGCorrectedAcceptorValue))
+ConcentrationCorrectedFretValue = (FI * 100) / CTBGCorrectedAcceptorValue
+ConcentrationCorrectedFretImage.Cells(o, k) = ConcentrationCorrectedFretValue
+
+o = o + 1
+Loop Until o = 513
+
+Next k
+
+End Sub
+
+
