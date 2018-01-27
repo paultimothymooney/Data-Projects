@@ -1,0 +1,77 @@
+from imblearn.over_sampling import ADASYN
+ada = ADASYN(ratio='auto',n_neighbors=2)
+X_trainAda, Y_trainAda = ada.fit_sample(X_trainFlat, Y_train)
+# Encode labels to hot vectors (ex : 2 -> [0,0,1,0,0,0,0,0,0,0])
+Y_trainAdaHot = to_categorical(Y_trainAda, num_classes = 20)
+Y_testHot = to_categorical(Y_test, num_classes = 20)
+print("X_train: ", X_train.shape)
+print("X_trainFlat: ", X_trainFlat.shape)
+print("X_trainAda Shape: ",X_trainAda.shape)
+###############
+# from imblearn.over_sampling import RandomOverSampler
+# ros = RandomOverSampler(ratio='auto')
+# X_trainRos, Y_trainRos = ros.fit_sample(X_trainFlat, Y_train)
+# # Encode labels to hot vectors (ex : 2 -> [0,0,1,0,0,0,0,0,0,0])
+# Y_trainRosHot = to_categorical(Y_trainRos, num_classes = 20)
+# Y_testHot = to_categorical(Y_test, num_classes = 20)
+# print("X_train: ", X_train.shape)
+# print("X_trainFlat: ", X_trainFlat.shape)
+# print("X_trainRos Shape: ",X_trainRos.shape)
+############
+# from imblearn.over_sampling import SMOTE
+# sm = SMOTE(ratio='auto')
+# X_trainSmote, Y_trainSmote = sm.fit_sample(X_trainFlat, Y_train)
+# # Encode labels to hot vectors (ex : 2 -> [0,0,1,0,0,0,0,0,0,0])
+# Y_trainSmoteHot = to_categorical(Y_trainSmote, num_classes = 20)
+# Y_testHot = to_categorical(Y_test, num_classes = 20)
+# print("X_train: ", X_train.shape)
+# print("X_trainFlat: ", X_trainFlat.shape)
+# print("X_trainSmote Shape: ",X_trainSmote.shape)
+
+
+
+#####
+
+
+for i in range(len(X_trainAda)):
+    height, width, channels = 64,64,3
+    X_trainAdaReshaped = X_trainAda.reshape(len(X_trainAda),height,width,channels)
+print("X_trainAda Shape: ",X_trainAda.shape)
+print("X_trainAdaReshaped Shape: ",X_trainAdaReshaped.shape)
+#######
+# for i in range(len(X_trainRos)):
+#     height, width, channels = 64,64,3
+#     X_trainRosReshaped = X_trainRos.reshape(len(X_trainRos),height,width,channels)
+# print("X_trainRos Shape: ",X_trainRos.shape)
+# print("X_trainRosReshaped Shape: ",X_trainRosReshaped.shape)
+#######
+# for i in range(len(X_trainSmote)):
+#     height, width, channels = 64,64,3
+#     X_trainSmoteReshaped = X_trainSmote.reshape(len(X_trainSmote),height,width,channels)
+# print("X_trainSmote Shape: ",X_trainSmote.shape)
+# print("X_trainSmoteReshaped Shape: ",X_trainSmoteReshaped.shape)
+
+
+######
+
+
+dfAda = pd.DataFrame()
+dfAda["labels"]=Y_trainAda
+labAda = dfAda['labels']
+distAda = lab.value_counts()
+sns.countplot(labAda)
+print(dict_characters)
+#######
+# dfRos = pd.DataFrame()
+# dfRos["labels"]=Y_trainRos
+# labRos = dfRos['labels']
+# distRos = lab.value_counts()
+# sns.countplot(labRos)
+# print(dict_characters)
+######
+# dfSmote = pd.DataFrame()
+# dfSmote["labels"]=Y_trainSmote
+# labSmote = dfSmote['labels']
+# distSmote = lab.value_counts()
+# sns.countplot(labSmote)
+# print(dict_characters)

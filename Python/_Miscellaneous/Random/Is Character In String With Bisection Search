@@ -1,0 +1,15 @@
+def isIn(char, aStr):
+    midpointindex = len(aStr)//2
+    if len(aStr) == 0:
+        return False
+    elif len(aStr) == 1 and aStr == char:
+        return True
+    elif len(aStr) == 1 and aStr != char:
+        return False
+    elif aStr[midpointindex] == char:
+        return True
+    else:
+        if char < aStr[midpointindex]:
+            return isIn(char, aStr[:midpointindex])
+        else:
+            return isIn(char, aStr[midpointindex:])
