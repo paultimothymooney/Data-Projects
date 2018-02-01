@@ -2021,4 +2021,20 @@ print(X_train.columns)
 
 ########
 
+# As such, we will remove some of the more repetitive variables (i.e. we do not need more than one measurement of size, more than one measurement of shape, etc).
+
+# drop_list = ['mean perimeter','mean radius','mean compactness','mean concave points','radius error','perimeter error','worst radius','worst perimeter','worst compactness','worst concave points','compactness error','concave points error','worst texture','worst area']
+# sizeMeasurements = sizeMeasurements.drop(drop_list,axis = 1 ) 
+# X = sizeMeasurements[sizeMeasurements.columns[:-1]]
+# y = sizeMeasurements.target
+# X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2)
+# print('\n New Column Values: \n\n', sizeMeasurements.columns.values, "\n")
+# plotThree = sns.heatmap(X.corr(),cmap="BrBG",annot=False)
+# plotThree.set_title('Feature Correlation')
+# plt.show()
+
+#Now that our features are less highly correlated we are ready to proceed.  This was necessary because otherwise our Permutation Importance method would not work because we would not see a big enough change in performance after dropping just one of the many highly-correlated features.
+
+######
+
 
