@@ -2038,3 +2038,11 @@ print(X_train.columns)
 ######
 
 
+plotThree = sns.heatmap(X.corr(),cmap="BrBG",annot=False)
+plotThree.set_title('Feature Correlation')
+plt.show()
+# The third plot, however, illustrates that many of our features and highly correlated, and this can be a big problem for certain classification models. 
+
+#######
+
+
