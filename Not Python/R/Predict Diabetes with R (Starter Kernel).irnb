@@ -1,0 +1,216 @@
+{
+  "cells": [
+    {
+      "metadata": {
+        "_uuid": "cfe44f1827ea8f97ed3e9b6c018087d85eff5c4e"
+      },
+      "cell_type": "markdown",
+      "source": "**Predict Diabetes From Medical Records**"
+    },
+    {
+      "metadata": {
+        "_uuid": "17ed0cf538a0461ce5d118a38b42aac36e18fced"
+      },
+      "cell_type": "markdown",
+      "source": "The [Pima Indians Diabetes Database](https://www.kaggle.com/uciml/pima-indians-diabetes-database) can be used to train machine learning models to predict if a given patient has diabetes."
+    },
+    {
+      "metadata": {
+        "_uuid": "3fe6d39553ffcf2120c6713743430c88eb878c22"
+      },
+      "cell_type": "markdown",
+      "source": "*Step 1: Import R Packages*"
+    },
+    {
+      "metadata": {
+        "_kg_hide-input": true,
+        "_kg_hide-output": true,
+        "trusted": true,
+        "_uuid": "89f8cf9543f3ab9b21e21135b6f799934681ec4d"
+      },
+      "cell_type": "code",
+      "source": "library(tidyverse)\nlibrary(xgboost)\nlibrary(e1071,quietly = T)\nlibrary(caret,quietly = T)\ndiabetes <- read_csv(\"../input/train.csv\")\nset.seed(1234)\ndiabetes <- diabetes[sample(1:nrow(diabetes)), ]\ndiabetes$diagnosis <- diabetes$Outcome == \"1\"\ndiabetes$diagnosis <- diabetes$diagnosis * 1",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_uuid": "c21c65c9a97b664aa76e90b10928e32f0aba4761"
+      },
+      "cell_type": "markdown",
+      "source": "*Step 2: Inspect and Clean Data*"
+    },
+    {
+      "metadata": {
+        "_kg_hide-input": true,
+        "trusted": true,
+        "_uuid": "49fcf53c9958d4cd3d283ca8e46c2eb6412025eb"
+      },
+      "cell_type": "code",
+      "source": "diabetes = diabetes[,c(10,1,2,3,4,5,6,7,8,9)]\ndiabetes = na.omit(diabetes)\nhead(diabetes)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_uuid": "b81bb4133c74a460825d04ca5607690c10fdde4d"
+      },
+      "cell_type": "markdown",
+      "source": "*Step 3: Feature Engineering and Feature Selection*"
+    },
+    {
+      "metadata": {
+        "_kg_hide-input": true,
+        "trusted": true,
+        "_uuid": "b368f21a7423c70b59f486b62ef5e17eb8e78c5e"
+      },
+      "cell_type": "code",
+      "source": "diabetes2 <- diabetes %>%\n  select(-c(2,4,5,6,8,9))\ndiabetes3 <- diabetes2 %>%\n  select(-c(1,4))\nhead(diabetes3)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "cb272ef52aa16192efc3c8c6fe588b0d96f71cef",
+        "_kg_hide-input": true
+      },
+      "cell_type": "code",
+      "source": "diseaseLabels <- diabetes2 %>%\n    select(Outcome) \nhead(diseaseLabels)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "976ea827fa6b187c19713eb289bcd00c19764b67",
+        "_kg_hide-input": true
+      },
+      "cell_type": "code",
+      "source": "features <- data.matrix(diabetes3)\nlabels <- data.matrix(diseaseLabels)\ntrain_data <- features[1:448,]\ntrain_labels <- labels[1:448]\ntest_data <- features[(449:561),]\ntest_labels <- labels[(449:561)]\ndtrain <- xgb.DMatrix(data = train_data, label= train_labels)\ndtest <- xgb.DMatrix(data = test_data, label= test_labels)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_uuid": "ad04091370c1ea3cceaca81ce4964255bcd5eeb6"
+      },
+      "cell_type": "markdown",
+      "source": "*Step 4: Evaluate Model*"
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "9698d5444c60038730f1dc59f994a79e0c73bad0",
+        "_kg_hide-input": true
+      },
+      "cell_type": "code",
+      "source": "model <- xgboost(data = dtrain, \n                 nround = 2,\n                 objective = \"binary:logistic\")",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "0ee026cae6fddc1a167c2b22498603e8b72ded05",
+        "_kg_hide-input": true
+      },
+      "cell_type": "code",
+      "source": "pred <- predict(model, dtest)\nerr <- mean(as.numeric(pred > 0.5) != test_labels)\nprint(paste(\"test-error=\", err))",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "84852f92953533d00a7e14dea2a2f9ec9c506580",
+        "_kg_hide-input": true
+      },
+      "cell_type": "code",
+      "source": "xgb.plot.multi.trees(feature_names = names(features), \n                     model = model)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "3be7c87485394f3f0dd4f046bf5821d558240e69",
+        "_kg_hide-input": true
+      },
+      "cell_type": "code",
+      "source": "importance_matrix <- xgb.importance(names(features), model = model)\nxgb.plot.importance(importance_matrix)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_uuid": "1b02f9c0eefb467466f95c8b31ceb28dd184fd34"
+      },
+      "cell_type": "markdown",
+      "source": "*Step 5: Prepare submission file*"
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "b28ce2ad66a23d99b8bdcfcfd2bbe92ee7620bc1",
+        "_kg_hide-input": true,
+        "_kg_hide-output": true
+      },
+      "cell_type": "code",
+      "source": "test <- read_csv('../input/test.csv')\ndiabetes <- test\ndiabetes = diabetes[,c(9,1,2,3,4,5,6,7,8)]\ndiabetes2 <- diabetes %>%\n  select(-c(2,4,5,6,8,9))\ndiabetes3 <- diabetes2 %>%\n  select(-c(1,4))\n\nfeatures <- data.matrix(diabetes3)\npredictions <- predict(model, newdata = features)\npredictions <- as.numeric(predictions > 0.5)\nhead(predictions)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "6f722470883de882f831e9a00f173700a1960b52"
+      },
+      "cell_type": "code",
+      "source": "my_submission <- data_frame('Id' = as.integer(diabetes2$Id), 'Outcome' = predictions)\nwrite_csv(my_submission, 'my_submission.csv')",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "trusted": true,
+        "_uuid": "4ceb7f1922958ab5f78f79f07c781a7757f2ff7a"
+      },
+      "cell_type": "code",
+      "source": "head(my_submission)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_uuid": "df5afe3683dfac0c844ae287e19836474ced2014"
+      },
+      "cell_type": "markdown",
+      "source": "*Step 6: Submit Results*"
+    },
+    {
+      "metadata": {
+        "_uuid": "730fef8177a2d59a13ca080263e6b56575a256de"
+      },
+      "cell_type": "markdown",
+      "source": "1. Click on the \"Commit & Run\" button in the top right corner of the kernel editor\n1. Wait for the kernel to finish running then click on \"View Snapshot\"\n1. Wait for the kernel viewer page to load then click on the \"Output\" tab\n1. Find your submission file in the \"Output\" tab\n1. Click \"Submit to Competition\" "
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "R",
+      "language": "R",
+      "name": "ir"
+    },
+    "language_info": {
+      "mimetype": "text/x-r-source",
+      "name": "R",
+      "pygments_lexer": "r",
+      "version": "3.4.2",
+      "file_extension": ".r",
+      "codemirror_mode": "r"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 1
+}
