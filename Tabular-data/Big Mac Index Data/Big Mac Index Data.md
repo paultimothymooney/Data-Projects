@@ -1,0 +1,1 @@
+Big Mac Index Data
